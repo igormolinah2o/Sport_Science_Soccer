@@ -1,0 +1,277 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+### Once Excel files have been downloaded from Instat, save in a folder and run this Python script to combine multiple Instat 
+### files together, edit them, add & rename column headers as well as edit team names. There are a number of libraries that we 
+### need to import in order for us to work with the files. These libraries are glob and pandas.
+# 
+### Pandas is a library written for the Python programming language for data manipulation and analysis. In particular, it offers 
+### data structures and operations for manipulating numerical tables and time series. Use a loop to combine all excel files in 
+### the folder into a single file with two sheets: "Teams" and "Players".
+
+import glob
+import os
+import pandas as pd
+path = (file path/folder)
+files = glob.glob(os.path.join(path, "*.xlsx")) 
+Team = pd.concat(pd.read_excel(f, sheet_name = 'Teams') for f in files)
+Player = pd.concat(pd.read_excel(f, sheet_name = 'Players') for f in files)
+
+### (path, "*.xlsx") - refers to all files the the folder where the files are stored.
+
+### Read Team data frame file in to edit
+### Read in the match data frame
+Team.head()
+
+### Drop column "Position" as we don't need it for aggregated team file.
+Team.drop("Position", inplace=True,axis=1)
+
+
+### Create Extra Columns
+### Add columns called "Season" & "League"
+
+Team['Season'] = '2018/19'
+Team['League'] = 'Premier Soccer League'
+
+### List all the columns in the worksheet
+Team.dtypes
+
+# converting all columns to string type 
+Team = Team.astype(str) 
+print(Team.dtypes)
+
+# ## Edit Columns with Null values
+### A number of columns had Null or "-" values. Replace these values with a zero value. This is done by calling the dataframe 
+### Team (Step 1 above) and the specific column (original) and equalling it to the same dataframe and column yet this time 
+### the "-" value has been replaced with a "0".
+### Where fields have "Null" or "-" then 0 else "field"
+
+Team['Minutes played'] = Team['Minutes played'].replace({'-': '0'})
+Team['Goals'] = Team['Goals'].replace({'-': '0'})
+Team['Assists'] = Team['Assists'].replace({'-': '0'})
+Team['Yellow cards'] = Team['Yellow cards'].replace({'-': '0'})
+Team['Red cards'] = Team['Red cards'].replace({'-': '0'})
+Team['Total actions'] = Team['Total actions'].replace({'-':'0'})
+Team['Successful actions, %'] = Team['Successful actions, %'].replace({'-': '0'})
+Team['Shots'] = Team['Shots'].replace({'-': '0'})
+Team['Shots / on target, %'] = Team['Shots / on target, %'].replace({'-': '0'})
+Team['Passes'] = Team['Passes'].replace({'-': '0'})
+Team['Key passes'] = Team['Key passes'].replace({'-': '0'})
+Team['Crosses'] = Team['Crosses'].replace({'-': '0'})
+Team['Challenges'] = Team['Challenges'].replace({'-': '0'})
+Team['Air challenges'] = Team['Air challenges'].replace({'-': '0'})
+Team['Dribbles'] = Team['Dribbles'].replace({'-': '0'})
+Team['Tackles'] = Team['Tackles'].replace({'-': '0'})
+Team['Lost balls'] = Team['Lost balls'].replace({'-': '0'})
+Team['Ball recoveries'] = Team['Ball recoveries'].replace({'-': '0'})
+Team['Fouls'] = Team['Fouls'].replace({'-': '0'})
+Team['Foul suffered'] = Team['Foul suffered'].replace({'-': '0'})
+Team['Accurate passes, %'] = Team['Accurate passes, %'].replace({'-': '0'})
+Team['Key passes accuracy, %'] = Team['Key passes accuracy, %'].replace({'-': '0'})
+Team['Accurate crosses, %'] = Team['Accurate crosses, %'].replace({'-': '0'})
+Team['Challenges won, %'] = Team['Challenges won, %'].replace({'-': '0'})
+Team['Air challenges won, %'] = Team['Air challenges won, %'].replace({'-': '0'})
+Team['dribbles, %'] = Team['dribbles, %'].replace({'-': '0'})
+Team['tackles, %'] = Team['tackles, %'].replace({'-': '0'})
+Team['InStat Index'] = Team['InStat Index'].replace({'-': '0'})
+
+
+# ## Rename & Create Column Headers
+### Using a dictionary, we rename the columns as follows (old column:new column) with {at the start and end}
+
+Team.rename(columns={'Successful actions, %':'Successful actions%', 'Shots / on target, %': 'SoT%',
+                    'Accurate passes, %':'Accurate passes%','Key passes accuracy, %':'Key passes accuracy%',                     
+                    'Accurate crosses, %':'Accurate crosses%', 'Challenges won, %':'Challenges won%',
+                    'Air challenges won, %':'Air challenges won%', 'dribbles, %': 'Dribbles%',
+                    'tackles, %': 'Tackles%'}, 
+                 inplace=True)
+
+### View new column names - see columns with "%" have changed names
+
+### Create two new columns called "Tackles & Ball Recoveries" and "Ground Challenges".
+### We have to change the data type to a float (number) due to the digits in the column rather than text.
+
+Team["Tackles & Ball Recoveries"] = Team["Tackles"].astype(float) + Team["Ball recoveries"].astype(float)
+
+Team["Ground Challenges"] = Team["Challenges"].astype(float) - Team["Air challenges"].astype(float)
+
+### View Top 5 rows of team data sheet
+Team.head()
+
+
+# ## Edit Team Names
+### Eg: Edit team field to change team names as follows: {'name': 'new name'}
+
+Team['Team'] = Team['Team'].replace({'Orlando Pirates Football Club': 'Orlando Pirates', 'Baroka Football Club': 'Baroka FC',
+                                'Cape Town City Football Club': 'Cape Town City FC', 'Maritzburg United': 'Maritzburg United',
+                                'Chippa United Football Club': 'Chippa United', 'Bloemfontein Celtic': 'Bloemfontein Celtic',
+                                'Mamelodi Sundowns': 'Mamelodi Sundowns', 'Kaizer Chiefs Football Club': 'Kaizer Chiefs',
+                                'AmaZulu Football Club': 'AmaZulu FC', 'Free State Stars': 'Free State Stars', 
+                                'Polokwane City Football Club': 'Polokwane FC', 'Bidvest Wits': 'Bidvest Wits', 
+                                'Highlands Park': 'Highlands Park FC', 'SuperSport United': 'SuperSport United',
+                                'Golden Arrows Football Club': 'Golden Arrows', 'Black Leopards': 'Black Leopards'})
+
+
+# ### Now we read in the Player data frame sheet to edit
+
+### Overview of Top 5 rows of player sheet
+Player.head()
+
+# ## Create Extra Columns
+### Add columns called "Season" & "League"
+
+Player['Season'] = '2018/19'
+Player['League'] = 'Premier Soccer League'
+
+### Combine names (First Name & Surname) to make "Player Name"
+### "New name column" = "First column" + Space + "Second Column"
+
+Player['Player Name'] = Player['First name'] + " " + Player['Surname']
+
+### List all the columns in the worksheet
+Player.dtypes
+
+# ## Replace values within a column
+#### Using a dictionary, edit the values to your requirement. Ie: GK -> Goalkeeper etc...
+### Replace positions IDs with Position names...change as desired.
+
+Player['Position'] = Player['Position'].replace({'GK': 'Goalkeeper', 'LD': 'Defender', 'CD': 'Defender', 'RD': 'Defender', 
+                'DM': 'Midfielder', 'LM': 'Midfielder', 'RM': 'Midfielder', 'CM': 'Midfielder', 'DML': 'Midfielder', 
+                'DMR': 'Midfielder', 'DMC': 'Midfielder', 'AMC': 'Attacking Midfielder', 'AML': 'Attacking Midfielder', 
+                'AMR': 'Attacking Midfielder', 'F': 'Forward', 'CF': 'Forward'})
+
+
+### Edit Columns with Null values
+### A number of columns had Null or "-" values. Replace these values with a zero value. This is done by calling the dataframe 
+### Players (Step 1 above) and the specific column (original) and equalling it to the same dataframe and column yet this time the "-" 
+### value has been replaced with a "0".
+### Where fields have "Null" or "-" then 0 else "field"
+
+Player['Minutes played'] = Player['Minutes played'].replace({'-': '0'})
+Player['Goals'] = Player['Goals'].replace({'-': '0'})
+Player['Assists'] = Player['Assists'].replace({'-': '0'})
+Player['Yellow cards'] = Player['Yellow cards'].replace({'-': '0'})
+Player['Red cards'] = Player['Red cards'].replace({'-': '0'})
+Player['Total actions'] = Player['Total actions'].replace({'-': '0'})
+Player['Successful actions, %'] = Player['Successful actions, %'].replace({'-': '0'})
+Player['Shots'] = Player['Shots'].replace({'-': '0'})
+Player['Shots / on target, %'] = Player['Shots / on target, %'].replace({'-': '0'})
+Player['Passes'] = Player['Passes'].replace({'-': '0'})
+Player['Key passes'] = Player['Key passes'].replace({'-': '0'})
+Player['Crosses'] = Player['Crosses'].replace({'-': '0'})
+Player['Challenges'] = Player['Challenges'].replace({'-': '0'})
+Player['Air challenges'] = Player['Air challenges'].replace({'-': '0'})
+Player['Dribbles'] = Player['Dribbles'].replace({'-': '0'})
+Player['Tackles'] = Player['Tackles'].replace({'-': '0'})
+Player['Lost balls'] = Player['Lost balls'].replace({'-': '0'})
+Player['Ball recoveries'] = Player['Ball recoveries'].replace({'-': '0'})
+Player['Fouls'] = Player['Fouls'].replace({'-': '0'})
+Player['Foul suffered'] = Player['Foul suffered'].replace({'-': '0'})
+Player['Accurate passes, %'] = Player['Accurate passes, %'].replace({'-': '0'})
+Player['Key passes accuracy, %'] = Player['Key passes accuracy, %'].replace({'-': '0'})
+Player['Accurate crosses, %'] = Player['Accurate crosses, %'].replace({'-': '0'})
+Player['Challenges won, %'] = Player['Challenges won, %'].replace({'-': '0'})
+Player['Air challenges won, %'] = Player['Air challenges won, %'].replace({'-': '0'})
+Player['dribbles, %'] = Player['dribbles, %'].replace({'-': '0'})
+Player['tackles, %'] = Player['tackles, %'].replace({'-': '0'})
+Player['InStat Index'] = Player['InStat Index'].replace({'-': '0'})
+
+
+# ## Rename & Create Column Headers
+### Using a dictionary, we rename the columns as follows (old column:new column) with {at the start and end}
+
+Player.rename(columns={'Successful actions, %':'Successful actions%', 
+                       'Shots / on target, %': 'SoT%', 'Accurate passes, %':'Accurate passes%',
+                       'Key passes accuracy, %':'Key passes accuracy%', 
+                       'Accurate crosses, %':'Accurate crosses%', 'Challenges won, %':'Challenges won%',
+                       'Air challenges won, %':'Air challenges won%', 'dribbles, %': 'Dribbles%',
+                       'tackles, %': 'Tackles%'}, 
+                       inplace=True)
+
+### View new column names - see columns with "%" have changed names
+Player.columns
+
+### Create two new columns called "Tackles & Ball Recoveries" and "Ground Challenges".
+### We have to change the data type to a float (number) due to the digits in the column rather than text.
+
+Player["Tackles & Ball Recoveries"] = Player["Tackles"].astype(float) + Player["Ball recoveries"].astype(float)
+
+Player["Ground Challenges"] = Player["Challenges"].astype(float) - Player["Air challenges"].astype(float)
+
+### View Top 5 rows of player sheet
+Player.head()
+
+
+# ## Filtering Null Values In A Column
+### Unfortunately there may be times when a player has not been assigned a position.
+### List the values in the "Position" column.
+
+Player.Position.unique()
+
+### List the value "Null" when it exists in the "Position" column
+Player_data_list = ['Null']
+
+### In that column "Position", return the values "Null" as listed in "PSL_data_list".
+Player_Null = Player[Player.Position.isin(Player_data_list)]
+
+### Print out values where "Position" is Null. If this is the case, fill missing position manually in excel sheet.
+Player_Null
+
+### Otherwise, just return a list
+Player_Null.Position.unique()
+
+### To check for the actual values in the "Position" column, just add "~" before the values in the list created to test for
+### "Null" values.
+Player_Null = Player[~Player.Position.isin(Player_data_list)]
+
+Player_Null.Position.unique()
+
+
+### Per 90
+
+### To help our analysis later on, we would like to standardise the metrics across "a game". 
+### Create a column called "Mins Per 90" ("Minutes Played / 90" - also known as "Games played").
+### New column name = "Old column name" (as a number format) / 90
+
+Player['Mins Per 90'] = Player['Minutes played'].astype(float) / 90
+
+### Round the column figure to 2 decimal places
+
+Player['Mins Per 90']= round(Player['Mins Per 90'],2)
+
+### View Top 5 rows of player sheet
+Player.head()
+
+
+### Edit Team Names
+### Eg: Edit team field to change team names as follows: {'old name': 'new name'}
+
+Player['Team'] = Player['Team'].replace({'Orlando Pirates Football Club': 'Orlando Pirates', 'Baroka Football Club': 'Baroka FC',
+                                'Cape Town City Football Club': 'Cape Town City FC', 'Maritzburg United': 'Maritzburg United',
+                                'Chippa United Football Club': 'Chippa United', 'Bloemfontein Celtic': 'Bloemfontein Celtic',
+                                'Mamelodi Sundowns': 'Mamelodi Sundowns', 'Kaizer Chiefs Football Club': 'Kaizer Chiefs',
+                                'AmaZulu Football Club': 'AmaZulu FC', 'Free State Stars': 'Free State Stars', 
+                                'Polokwane City Football Club': 'Polokwane FC', 'Bidvest Wits': 'Bidvest Wits', 
+                                'Highlands Park': 'Highlands Park FC', 'SuperSport United': 'SuperSport United',
+                                'Golden Arrows Football Club': 'Golden Arrows', 'Black Leopards': 'Black Leopards'})
+
+
+### Create a dictionary for each data frame. Combine the data frames together into one workbook by naming sheet 1: 
+### "Teams" and sheet 2: "Players"
+
+PSL = {'Teams':Team, 'Players':Player}
+
+### Output File
+### Write two sheets into workbook as an Excel file. Use a loop to write the dictionary keys and values into the sheet and 
+### save the workbook.
+### Write both sheets into an Excel workbook for further analysis. Use a loop to write all the data together and save the
+### the workbook.
+
+writer = pd.ExcelWriter('XXXXX.xlsx', engine='xlsxwriter')
+ 
+for sheet_name in PSL.keys():
+    PSL[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False)
+    
+writer.save()
+
+### Excel book created for further analysis needs. Saved to drive. :ie: use search bar.
